@@ -28,15 +28,15 @@ func add_prefix{range_check_ptr, bitwise_ptr : BitwiseBuiltin*}(value : felt, pr
     return (result, overflow)
 end
 
-func get_hash{range_check_ptr,  keccak_ptr: felt*, bitwise_ptr : BitwiseBuiltin*}(starknetAddress: felt, domain_hash : Uint256) -> (
+func get_hash{range_check_ptr,  keccak_ptr: felt*, bitwise_ptr : BitwiseBuiltin*}(starknet_address: felt, domain_hash : Uint256) -> (
         hashed_msg : Uint256):
     alloc_locals
 
-    let (starknetAddress_h, starknetAddress_l) = split_felt(starknetAddress)
+    let (starknet_address_h, starknet_address_l) = split_felt(starknet_address)
 
     let (encoded_data : Uint256*) = alloc()
     assert encoded_data[0] = Uint256(TYPE_HASH_LOW, TYPE_HASH_HIGH)
-    assert encoded_data[1] = Uint256(starknetAddress_l, starknetAddress_h)
+    assert encoded_data[1] = Uint256(starknet_address_l, starknet_address_h)
     let (data_hash) = keccak_uint256s_bigend{keccak_ptr=keccak_ptr}(2, encoded_data)
 
     let prefix = PREFIX
