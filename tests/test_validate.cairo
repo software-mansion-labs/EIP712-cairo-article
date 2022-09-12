@@ -11,6 +11,13 @@ func test_validate_add{
     range_check_ptr,
 }():
     alloc_locals
-    #add_connection()
+    %{
+        import os
+        import sys
+        print(os.environ['PYTHONPATH'])
+        #print(sys.path)
+        #sys.path.append("/Users/jakubszmurlo/eip712/eip712")
+        import testing
+    %}
     return ()
 end

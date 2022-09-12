@@ -1,9 +1,9 @@
 %lang starknet
 
 from starkware.cairo.common.alloc import alloc
-from starkware.cairo.common.math import split_felt
+from starkware.cairo.common.math import split_felt, assert_not_equal
 from starkware.cairo.common.uint256 import Uint256
-from starkware.cairo.common.cairo_builtins import BitwiseBuiltin
+from starkware.cairo.common.cairo_builtins import BitwiseBuiltin, HashBuiltin
 from starkware.cairo.common.bitwise import bitwise_and
 from starkware.cairo.common.cairo_keccak.keccak import keccak_uint256s, keccak_uint256s_bigend, keccak
 
@@ -11,9 +11,27 @@ const PREFIX = 0x1901
 # Needs to be recalculated
 const TYPE_HASH_HIGH = 0x71430fb281ccdfae35ad0b5d5279034e
 const TYPE_HASH_LOW = 0x04e1e56c77b10d30506aad6cad95206f
-# Needs to be recalculated
-const DOMAIN_SEP_HIGH = 0xd986ed154f5666297a4a36c4e72f7a12
-const DOMAIN_SEP_LOW = 0xd338e4e6e1e35a9cfc4b4f3cf1778252
+
+@storage_var
+func domain_sep() -> (domain_separator: Uint256):
+end
+
+func get_domain_separator{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}()->(domain_separator: Uint256):
+    let (domain_separator) = domain_sep.read()
+    # Possibly an assertion is need for the case if domain_sep hasn't been initialized.
+    return (domain_separator)
+end
+
+func set_domain_separator{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(domain_separator: Uint256):
+    let (domain_separator_check) = domain_sep.read()
+    with_attr error_message(
+        "Domain separator hash can only be set once."
+    ):
+        assert domain_separator_check = Uint256(0,0)
+    end
+    domain_sep.write(domain_separator)
+    return()
+end
 
 # value has to be a 16 byte word
 # prefix length = PREFIX_BITS
