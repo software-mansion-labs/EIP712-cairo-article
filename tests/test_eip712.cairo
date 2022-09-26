@@ -10,13 +10,13 @@ func test_domain_sep{
     syscall_ptr : felt*,
     pedersen_ptr : HashBuiltin*,
     range_check_ptr
-}():
-    alloc_locals
-    let (domain_sep) = get_domain_separator()
+}(){
 
-    set_domain_separator(Uint256(2137,2137))
-    let (domain_sep) = get_domain_separator()
-    assert domain_sep = Uint256(2137,2137)
+    let (domain_sep) = get_domain_separator();
 
-    return ()
-end
+    set_domain_separator(Uint256(2137,2137));
+    let (domain_sep) = get_domain_separator();
+    assert domain_sep = Uint256(2137,2137);
+
+    return ();
+}
