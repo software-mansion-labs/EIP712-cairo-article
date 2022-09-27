@@ -1,3 +1,4 @@
+from ast import Constant
 import sha3
 
 from eip712_structs import EIP712Struct, Address, String, Uint
@@ -11,7 +12,7 @@ from coincurve.utils import hex_to_bytes
 # Etherum private key
 PRIVATE_KEY = '4c8d872afd351d5711d1eb31299b8769e9b62c6bcd47fc6904a88b6533fc337a'
 
-# The actual address will be set after contract is deployed, and then domain separator will be a constatnt
+# The actual address will be set after contract is deployed, and then domain separator will be a constant
 VERYFYING_CONTRACT = '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'
 
 # Message structure
@@ -25,6 +26,7 @@ class Eip712_hashing_test:
         self.domain = make_domain(name='TestContract',
                         version='1',
                         verifyingContract=VERYFYING_CONTRACT)
+
     def get_signature(self, starknet_address):
         keccak_hash = lambda x : sha3.keccak_256(x).digest()
 
@@ -36,8 +38,7 @@ class Eip712_hashing_test:
         signable_bytes = msg.signable_bytes(self.domain)
 
         # Now ... sign it :)
-        pk = PrivateKey.from_hex(PRIVATE_KEY)
-        signature = pk.sign_recoverable(signable_bytes, hasher=keccak_hash)
+        signature = self.pkey.sign_msg(signable_bytes)
         
         # Array of 5 128bit integers is expected on the cairo side.
         res = []

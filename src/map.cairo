@@ -24,5 +24,5 @@ func are_addresses_connected{
     range_check_ptr,
 }(eth_address: felt, starknet_address: felt) -> (res : felt){
     let (res) = storage.read(eth_address, starknet_address);
-    return (res);
+    return (res = res);
 }

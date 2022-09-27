@@ -7,54 +7,37 @@ from starkware.cairo.common.cairo_builtins import BitwiseBuiltin, HashBuiltin
 from starkware.cairo.common.bitwise import bitwise_and
 from starkware.cairo.common.cairo_keccak.keccak import keccak_uint256s, keccak_uint256s_bigend, keccak_bigend
 
+
 const DIVISOR = 2**64;
 
 const PREFIX = 0x1901;
 
+// A Hash of a structure that we're signing (Payload) which is shown in ../struct.json file 
 const TYPE_HASH_HIGH = 0xd3edf21d0254954db14d94abab56644c;
 const TYPE_HASH_LOW = 0x1100d60cff7b050ffcb29574618d516e;
 
-@storage_var
-func domain_sep() -> (domain_separator: Uint256) {
+// Splits 128bit big endian int to 2 64bit small endian ints
+func split_to_64bit_small_endian_words{range_check_ptr, bitwise_ptr : BitwiseBuiltin*}(value: felt) -> (high: felt, low: felt){
+    let (temp) = word_reverse_endian(value);
+    let (high, low) = unsigned_div_rem(temp, DIVISOR);
+    return (high, low);
 }
-
-func get_domain_separator{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}()->(domain_separator: Uint256){
-    let (domain_separator) = domain_sep.read();
-    // Possibly an assertion is needed for the case if domain_sep hasn't been initialized.
-    return (domain_separator);
-}
-
-@external
-func set_domain_separator{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(domain_separator: Uint256){
-    let (domain_separator_check) = domain_sep.read();
-    with_attr error_message(
-        "Domain separator hash can only be set once."
-    ){
-        assert domain_separator_check = Uint256(0,0);
-    }
-    domain_sep.write(domain_separator);
-    return();
-}
-
 // Changes input format to array of 64bit values in little endian format
 func populate_array_little_end{range_check_ptr, bitwise_ptr : BitwiseBuiltin*}(w0: felt, w1: felt, w2: felt, w3: felt, overflow: felt, signable_bytes : felt*){
-    let (temp) = word_reverse_endian(w0);
-    let (high, low) = unsigned_div_rem(temp, DIVISOR);
+    
+    let (high, low) = split_to_64bit_small_endian_words(w0);
     assert signable_bytes[0] = low;
     assert signable_bytes[1] = high;
 
-    let (temp) = word_reverse_endian(w1);
-    let (high, low) = unsigned_div_rem(temp, DIVISOR);
+    let (high, low) = split_to_64bit_small_endian_words(w1);
     assert signable_bytes[2] = low;
     assert signable_bytes[3] = high;
 
-    let (temp) = word_reverse_endian(w2);
-    let (high, low) = unsigned_div_rem(temp, DIVISOR);
+    let (high, low) = split_to_64bit_small_endian_words(w2);
     assert signable_bytes[4] = low;
     assert signable_bytes[5] = high;
 
-    let (temp) = word_reverse_endian(w3);
-    let (high, low) = unsigned_div_rem(temp, DIVISOR);
+    let (high, low) = split_to_64bit_small_endian_words(w3);
     assert signable_bytes[6] = low;
     assert signable_bytes[7] = high;
 

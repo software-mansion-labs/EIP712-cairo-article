@@ -13,10 +13,14 @@ func test_validate_add{
     bitwise_ptr : BitwiseBuiltin*
 }(){
     alloc_locals;
-    local array: felt*;
     local eth_address;
     local domain_hash_low;
     local domain_hash_high;
+    local v;
+    local r_low;
+    local r_high;
+    local s_low;
+    local s_high;
     %{
         import sys
         sys.path.append("/usr/local/lib/python3.9/site-packages")
@@ -24,7 +28,7 @@ func test_validate_add{
         import testing
         test1 = testing.Eip712_hashing_test()
         
-        sig = test1.get_signature(2137)
+        sig = test1.get_signature(314141244)
         
         ids.eth_address = test1.get_eth_address()
 
@@ -32,12 +36,19 @@ func test_validate_add{
         ids.domain_hash_low = domain_hash % 2**128
         ids.domain_hash_high = domain_hash // 2**128
 
-        ids.array = array = segments.add()
-        for i, val in enumerate(sig):
-            memory[array + i] = val
+        ids.v = sig[0]
+        ids.r_high = sig[1]
+        ids.r_low = sig[2]
+        ids.s_high = sig[3]
+        ids.s_low = sig[4]
     %}
     let domain_hash = Uint256(domain_hash_low, domain_hash_high);
-
-    add_connection(eth_address, 2137, domain_hash, 5, array);
+    let (array: felt*) = alloc();
+    assert array[0] = v;
+    assert array[1] = r_high;
+    assert array[2] = r_low;
+    assert array[3] = s_high;
+    assert array[4] = s_low;
+    add_connection(eth_address, 314141244, domain_hash, 5, array);
     return();
 }

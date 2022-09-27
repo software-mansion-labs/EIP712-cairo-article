@@ -14,6 +14,9 @@ from starkware.cairo.common.serialize import serialize_word
 from src.eip712 import get_hash
 from src.map import save_connected_addresses, are_addresses_connected
 
+// Will be used once contract is deployed and it's address is set, for test purposes domain separator is passed as an argument.
+from src.domain_separator import get_domain_separator
+
 @external
 func add_connection{
     syscall_ptr : felt*,
