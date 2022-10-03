@@ -1,7 +1,7 @@
 # EIP712 authentication in cairo 
 In this article, I would like to show you how to authenticate messages signed by an Ethereum account with EIP712 typed structured data hashing and signing standard, on StarkNet.
 ## Background
-Before I begin, make sure that you're familiar with [cairo-lang](https://www.cairo-lang.org) and [protostar](https://docs.swmansion.com/protostar/) as it is essential in this case.
+Make sure that you're familiar with [cairo-lang](https://www.cairo-lang.org) and [protostar](https://docs.swmansion.com/protostar/) as it is essential in this case.
 There is a whole dedicated [piece](https://blog.swmansion.com/testing-starknet-contracts-made-easy-with-protostar-2ecdad3c9133) explaining almost everything you would need to know before reading this article, so make sure to check it out. Also, some knowledge about [EIP-712](https://eips.ethereum.org/EIPS/eip-712) would be nice too, as I won't be going into details about how it works.
 
 # Use case - creating a binding between ETH address and Starknet Address
