@@ -53,7 +53,36 @@ func assert_valid_eth_signature{
     return ();
 }
 ```
+## Message structure
+```json
+{
+  "domain": {
+    "name": "TestContract",
+    "contractAddress": "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+    "version": "1"
+  },
+
+  "primaryType": "Payload",
+  "types": {
+    "domain": [
+      { "name": "name", "type": "string" },
+      { "name": "contractAddress", "type": "address"},
+      { "name": "version", "type": "string" }
+    ],
+    "Payload": [
+      { "name": "myStarkNetAddress", "type": "uint256" }
+    ]
+  }
+}
+```
+This is the structure that we'll be using in this example. Note that `domain` here represents `eip712Domain` which, after hashing, will become a domain separator that we will need. It ensures that the signature can only be used by our contract on the given chain, and that's what `contractAddress` is needed for (more on that later).<br/>
+`Payload` will be the main structure that we'll be constructing and signing. For the sake of simplicity, it only has one field but the EIP-712 standard allows for any type of structure.
+## Signing on the Ethereum side
+That's the easy step because there are tools that will do that for you e.g metamask. You just need to call the `signTypedData_v4` function (inputting the correct address in the `myStarkNetAddress` field) and it will return the signature that we need. *insert grafika here*<br/>
+Then you would need to call the contract that we're writing from your StarkNet account which expects two input variables: your Ethereum address and the message signature that you have just created.
 ## Recreating and hashing the message
+### The basic idea
+Since the ownership of the Ethereum account is confirmed by signing the message for which the private key is needed, we also need to confirm that the user owns the StarkNet account of which's address he is using. That's why we're deliberately not passing `starknet_address` as an input variable, instead, we call `get_caller_address()`, which we'll use as the address we need. If the user calls the contract from the account he wants to bind with the Ethereum address, everything will match and the connection will be created.
 ### Constants
 Instead of calculating the structure hash every time, we can precalculate it and store it as a constant to save us some computationally expensive operations. Additionally, Ethereum uses a pre-chosen prefix, which is explained in the [documentation](https://eips.ethereum.org/EIPS/eip-712)
 
@@ -107,7 +136,7 @@ func set_domain_separator{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, rang
 }
  ```
 ### Recreating the message hash
-Since our example is pretty easy, our structure contains only one field (StarknetAddress), recreating the hashable string is pretty easy; we just need to concatenate the structure hash with our value.
+Since our example is pretty easy, our structure contains only one field (myStarkNetAddress), recreating the hashable string is pretty easy; we just need to concatenate the structure hash with our value.
 
 
  ```cairo
