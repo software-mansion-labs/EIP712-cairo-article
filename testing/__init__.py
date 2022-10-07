@@ -17,7 +17,7 @@ VERYFYING_CONTRACT = '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'
 
 # Message structure
 class Payload(EIP712Struct):
-  StarknetAddress = Uint(256)
+  myStarkNetAddress = Uint(256)
 
 class Eip712_hashing_test:
     def __init__(self):
@@ -28,11 +28,9 @@ class Eip712_hashing_test:
                         verifyingContract=VERYFYING_CONTRACT)
 
     def get_signature(self, starknet_address):
-        keccak_hash = lambda x : sha3.keccak_256(x).digest()
-
         # Filling the message structure
         msg = Payload()
-        msg['StarknetAddress'] = starknet_address
+        msg['myStarkNetAddress'] = starknet_address
 
         # Converting it to signable bytes
         signable_bytes = msg.signable_bytes(self.domain)

@@ -13,8 +13,8 @@ const DIVISOR = 2**64;
 const PREFIX = 0x1901;
 
 // A Hash of a structure that we're signing (Payload) which is shown in ../struct.json file 
-const TYPE_HASH_HIGH = 0xd3edf21d0254954db14d94abab56644c;
-const TYPE_HASH_LOW = 0x1100d60cff7b050ffcb29574618d516e;
+const TYPE_HASH_HIGH = 0xed316f23563caa993043a41222b71801;
+const TYPE_HASH_LOW = 0xf39d338d03bb3716a63570c1320a8101;
 
 // Splits 128bit big endian int to 2 64bit small endian ints
 func split_to_64bit_small_endian_words{range_check_ptr, bitwise_ptr : BitwiseBuiltin*}(value: felt) -> (high: felt, low: felt){
