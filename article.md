@@ -79,9 +79,40 @@ This is the structure that we'll be using in this example. Note that `domain` he
 `Payload` will be the main structure that we'll be constructing and signing. For the sake of simplicity, it only has one field but the EIP-712 standard allows for any type of structure.
 ## Signing on the Ethereum side
 That's the easy step because there are tools that will do that for you e.g metamask. You just need to call the `signTypedData_v4` function (inputting the correct address in the `myStarkNetAddress` field) and it will return the signature that we need.<br/>
-<img width="915" alt="Screenshot 2022-10-12 at 10 42 48" src="https://user-images.githubusercontent.com/103134115/195298629-14fea76e-c62d-4180-a6a9-483ffe88451e.png">
-<img width="352" alt="Screenshot 2022-10-12 at 10 41 54" src="https://user-images.githubusercontent.com/103134115/195298706-fc9320e2-a550-465b-8848-0db3d33fab0f.png">
-Then you would need to call the contract that we're writing from your StarkNet account which expects two input variables: your Ethereum address and the message signature that you have just created.
+```js
+const msg = {
+  domain: {
+    name: "TestContract",
+    verifyingContract: '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF',
+    version: '1',
+  },
+  message: {
+    "myStarkNetAddress": 12356789,
+  },
+  primaryType: 'Payload',
+  types: {
+    domain: [
+      { name: 'name', type: 'string' },
+      { name: 'verifyingContract', type: 'address' },
+      { name: 'version', type: 'string' },
+    ],
+    Payload: [
+      { name: 'myStarkNetAddress', type: 'uint256' },
+    ],
+  },
+};
+const accounts = await window.ethereum.request({method: "eth_requestAccounts"})
+await window.ethereum.request({
+    method: "eth_signTypedData_v4",
+    from: accounts[0],
+    params: [accounts[0], JSON.stringify(msg)]
+})
+```
+After you input this JS code into the console on the MetaMask website it will trigger a signing request (of course normally you wouldn't do it this way but it's just for demonstration's sake).<br/>
+<img width="352" alt="Screenshot 2022-10-12 at 10 41 54" src="https://user-images.githubusercontent.com/103134115/195298706-fc9320e2-a550-465b-8848-0db3d33fab0f.png"><br/>
+As you can see everything is transparent so you don't have to sign something blindly - that's one of the pros of using EIP-712 standard.<br/>
+<img width="915" alt="Screenshot 2022-10-12 at 10 42 48" src="https://user-images.githubusercontent.com/103134115/195298629-14fea76e-c62d-4180-a6a9-483ffe88451e.png"><br/>
+When you sign this message you will receive the message signature that we need. Then you would need to call the contract that we're writing from your StarkNet account which expects two input variables: your Ethereum address and the message signature that you have just created.
 ## Recreating and hashing the message
 ### The basic idea
 Since the ownership of the Ethereum account is confirmed by signing the message for which the private key is needed, we also need to confirm that the user owns the StarkNet account of which's address he is using. That's why we're deliberately not passing `starknet_address` as an input variable, instead, we call `get_caller_address()`, which we'll use as the address we need. If the user calls the contract from the account he wants to bind with the Ethereum address, everything will match and the connection will be created.
