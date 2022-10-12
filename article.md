@@ -78,7 +78,9 @@ func assert_valid_eth_signature{
 This is the structure that we'll be using in this example. Note that `domain` here represents `eip712Domain` which, after hashing, will become a domain separator that we will need. It ensures that the signature can only be used by our contract on the given chain, and that's what `contractAddress` is needed for (more on that later).<br/>
 `Payload` will be the main structure that we'll be constructing and signing. For the sake of simplicity, it only has one field but the EIP-712 standard allows for any type of structure.
 ## Signing on the Ethereum side
-That's the easy step because there are tools that will do that for you e.g metamask. You just need to call the `signTypedData_v4` function (inputting the correct address in the `myStarkNetAddress` field) and it will return the signature that we need. *insert grafika here*<br/>
+That's the easy step because there are tools that will do that for you e.g metamask. You just need to call the `signTypedData_v4` function (inputting the correct address in the `myStarkNetAddress` field) and it will return the signature that we need.<br/>
+<img width="915" alt="Screenshot 2022-10-12 at 10 42 48" src="https://user-images.githubusercontent.com/103134115/195298629-14fea76e-c62d-4180-a6a9-483ffe88451e.png">
+<img width="352" alt="Screenshot 2022-10-12 at 10 41 54" src="https://user-images.githubusercontent.com/103134115/195298706-fc9320e2-a550-465b-8848-0db3d33fab0f.png">
 Then you would need to call the contract that we're writing from your StarkNet account which expects two input variables: your Ethereum address and the message signature that you have just created.
 ## Recreating and hashing the message
 ### The basic idea
