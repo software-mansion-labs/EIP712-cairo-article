@@ -9,7 +9,7 @@
   "types": {
     "domain": [
       { "name": "name", "type": "string" },
-      { "name": "contractAddress", "type": "address"},
+      { "name": "verifyingContract", "type": "address"},
       { "name": "version", "type": "string" }
     ],
     "Payload": [
