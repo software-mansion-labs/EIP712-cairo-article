@@ -322,7 +322,7 @@ func storage(eth_address : felt, starknet_address : felt) -> (exists: felt){
 ```
 Bear in mind that we won't be able to list all the Starknet addresses connected to the Ethereum address or vice versa. All we can do is check whether some two addresses are connected or not. If you want some more advanced functions, you'd need to change how the addresses are bound - for example, instead of <br/>`func storage(eth_address : felt, starknet_address : felt) -> (exists: felt)`
 as a storage variable, you could use <br/>
-`func storage(eth_address : felt, starknet_address_index : felt) -> (starknet_address: felt)` which, instead of mapping a pair of `eth_address` and `starknet_address` to a 1, signifying the existence of the connection, maps the `eth_address` to and index of `starknet_address` allowing you to iterate through them:
+`func storage(eth_address : felt, starknet_address_index : felt) -> (starknet_address: felt)` which, instead of mapping a pair of `eth_address` and `starknet_address` to a 1, signifying the existence of the connection, maps the pair of `eth_address` and index to the `starknet_address` allowing you to iterate through them:
 ```
 storage(0x1, 0) = 0x321312
 storage(0x1, 1) = 0x721397
