@@ -2,8 +2,8 @@
 In this article, I would like to show you how to verify messages signed as described in EIP712 on StarkNet. This requires recreating the original EIP712 payload, hashing it, and verifying Ethereum signature.
 ## EIP-712
 ### What is EIP-712
-EIP-712 is a standard for hashing and signing typed structured data. Since the signing function used in the Ethereum environment inputs and outputs byte strings that are linear, there is no natural way of signing more complex data structures widely present in the real world. A function from a structure to a byte string is non-trivial because we need to ensure determinism, pre-image resistance, and collision resistance, and depending on the implementation, some of those criteria might not be met.
-EIP-712 does just that: it gives us a clear way to create a deterministic function from almost any type of structure to byte strings which can then be signed by an Ethereum account. To understand the rest of the article you will need to understand how this standard handles hashing structures and what a domain separator is. To get a basic grasp of the topic, I recommend skimming through this [documentation](https://eips.ethereum.org/EIPS/eip-712).
+EIP-712 is a standard for hashing and signing typed structured data. Since the signing function used in the Ethereum environment inputs and outputs byte strings that are linear, there is no natural way of signing more complex data structures widely present in the real world. A function transforming a structure to a byte string is non-trivial because we need to ensure determinism, pre-image resistance, and collision resistance, and depending on the implementation, some of those criteria might not be met.
+EIP-712 does exactly that: it gives us a clear way to create a deterministic function from almost any type of structure to byte strings which can then be signed by an Ethereum account. To understand the rest of the article you will need to understand how this standard handles hashing structures and what a domain separator is. To get a basic grasp of the topic, I recommend skimming through this [documentation](https://eips.ethereum.org/EIPS/eip-712).
 ## Background
 Make sure that you're familiar with [cairo-lang](https://www.cairo-lang.org) as it is essential in this case.
 There is a whole dedicated [piece](https://blog.swmansion.com/testing-starknet-contracts-made-easy-with-protostar-2ecdad3c9133) explaining almost everything you would need to know before reading this article, so make sure to check it out. 
@@ -41,7 +41,7 @@ Elements of the domain are as follows:
 
 
 ## Signing with an Ethereum wallet
-Let's use Metamask as an example. You just need to call the `signTypedData_v4` function (inputting the correct address in the `starknetAddress` field) and it will return the signature that we need.<br/>
+Let's use Metamask as an example. You just need to call the `signTypedData_v4` ffunction with proper parameters and it will return the signature that we need.<br/>
 ```js
 const msg = {
   domain: {
@@ -296,7 +296,7 @@ func add_connection{
     return ();
 }
 ```
-The last thing to do is actually create a connection between `eth_address` and `starknet_address`. As this is an example, we'll be using a basic map between a pair of addresses and a boolean value (`read` function of a storage variable in cairo will return 0 if a key doesn't exist). In our, simple, case `save_connected_addresses` just calls an internal `write` function of the storage variable.<br/>
+The last thing to do is actually create a connection between `eth_address` and `starknet_address`. As this is an example, we'll be using a basic map between a pair of addresses and a boolean value (`read` function of a storage variable in cairo will return 0 if a key doesn't exist). In our simple case `save_connected_addresses` just calls an internal `write` function of the storage variable.<br/>
 
 ```cairo
 %lang starknet
