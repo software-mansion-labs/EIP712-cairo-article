@@ -10,7 +10,7 @@ There is a whole dedicated [piece](https://blog.swmansion.com/testing-starknet-c
 ```json
 {
   "domain": {
-    "name": "TestContract",
+    "name": "Confirm the ownership of this StarkNet address",
     "contractAddress": "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
     "version": "1"
   },
@@ -23,63 +23,22 @@ There is a whole dedicated [piece](https://blog.swmansion.com/testing-starknet-c
       { "name": "version", "type": "string" }
     ],
     "Payload": [
-      { "name": "myStarkNetAddress", "type": "uint256" }
+      { "name": "starknetAddress", "type": "uint256" }
     ]
   }
 }
 ```
-This is the structure that we'll be using in this example. Note that `domain` here represents `eip712Domain` which, after hashing, will become a domain separator that we will need. It ensures that the signature can only be used by our contract on the given chain, and that's what `contractAddress` is needed for (more on that later).<br/>
-`Payload` will be the main structure that we'll be constructing and signing. For the sake of simplicity, it only has one field but the EIP-712 standard allows for any type of structure.
+This is the structure that we'll be using in this example. Note that `domain` here represents `eip712Domain` which, after hashing, will become a domain separator that we will need.<br/>
+Elements of the domain are as follows:
+* `name` - the user readable name of signing domain, i.e. the name of the DApp or the protocol.
+* `version` - the current major version of the signing domain. Signatures from different versions are not compatible.
+* `contractAddress` - the address of the contract that will verify the signature. It ensures that the signature can only be used by our contract on the given chain.
 
-## Creating a connection
-On the surface the concept might be simple, we get the Ethereum address as an input and use the caller's address as Starknet address, we call `save_connected_addresses` function and we're done, right? Well not really, first we have to make sure that the Ethereum address belongs to the person calling this function. That's the hard part, we need to recreate the message signed on the Ethereum side, and then by using the signature given as an input we need to confirm that the extracted address matches our input. That what `assert_valid_eth_signature` function is doing. By calling `get_caller_address()` and using it as our Starknet address we ensure that it indeed belongs to the user and we will use it when reconstructing a signed message.
-```cairo
-@external
-func add_connection{
-    syscall_ptr : felt*,
-    pedersen_ptr : HashBuiltin*,
-    range_check_ptr,
-    bitwise_ptr : BitwiseBuiltin*
-}(eth_address : felt, starknet_address : felt, domain_hash: Uint256, signature_len: felt, signature: felt*){
-    assert_valid_eth_signature(eth_address, starknet_address, domain_hash, signature_len, signature);
-    save_connected_addresses(eth_address, starknet_address);
-    return ();
-}
-```
+`Payload` will be the main structure that we'll be constructing and signing. For the sake of simplicity, it only has one field but the EIP-712 standard offers a lot of flexibility.
 
-The hardest part for us is getting the hash of our message. Once we have that, we can use a built-in function `verify_eth_signature_uint256` that will do all the heavy lifting, dealing with complicated math. 
-So we will have to write the `get_hash` function for ourselves.
-```cairo
-func assert_valid_eth_signature{
-        syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr,
-        bitwise_ptr : BitwiseBuiltin*
-}(eth_address: felt, starknet_address: felt, domain_hash: Uint256, signature_len: felt, signature: felt*){
-    alloc_locals;
-    with_attr error_message(
-        "Invalid signature length. Signature should have exactly 5 elements."
-    ){
-        assert signature_len = 5;
-    }
-
-    let v = signature[0];
-    let r = Uint256(signature[2], signature[1]);
-    let s = Uint256(signature[4], signature[3]);
-    
-    let (local keccak_ptr_start) = alloc();
-    let keccak_ptr = keccak_ptr_start;
-
-    let (hash_uint) = get_hash{keccak_ptr=keccak_ptr}(starknet_address, domain_hash);
-   
-    verify_eth_signature_uint256{keccak_ptr=keccak_ptr}(hash_uint, r, s, v, eth_address);
-
-    finalize_keccak(keccak_ptr_start=keccak_ptr_start, keccak_ptr_end=keccak_ptr);
-
-    return ();
-}
-```
 
 ## Signing with an Ethereum wallet
-Let's use Metamask as an example. You just need to call the `signTypedData_v4` function (inputting the correct address in the `myStarkNetAddress` field) and it will return the signature that we need.<br/>
+Let's use Metamask as an example. You just need to call the `signTypedData_v4` function (inputting the correct address in the `starknetAddress` field) and it will return the signature that we need.<br/>
 ```js
 const msg = {
   domain: {
@@ -109,14 +68,26 @@ await window.ethereum.request({
     params: [accounts[0], JSON.stringify(msg)]
 })
 ```
-After you input this JS code into the console on the MetaMask website it will trigger a signing request (of course normally you wouldn't do it this way but it's just for demonstration's sake).<br/><br/>
+After you run this this JS code in the browser's console on the MetaMask website it will trigger a signing request. An application would use a similar code to get user's accounts and signature. <br/><br/>
 <img alt="Screenshot 2022-10-12 at 10 41 54" src="./graphics/metamask.png"><br/><br/>
 As you can see everything is transparent so you don't have to sign something blindly - that's one of the pros of using EIP-712 standard.<br/><br/>
 <img alt="Screenshot 2022-10-12 at 10 41 54" src="./graphics/signature.png"><br/>
-When you sign this message you will receive the message signature that we need. Then you would need to call the contract that we're writing from your StarkNet account which expects two input variables: your Ethereum address and the message signature that you have just created.
+When you sign this message you will receive the message signature that we need. After that we can send a transaction containing both the Ethereum address and the signature to StarkNet's contract.
+## Creating a connection
+Before we create a connection we need to ensure that the caller owns both the addresses. This is how we can do it:
+1. Sign the structure containing the StarkNet address with our Ethereum account
+2. Call the contract that we are creating with received signature and our Ethereum address from your StarkNet account.
+3. By calling `get_caller_address()` and using it as our Starknet address we ensure that it indeed belongs to the user and we will use it when reconstructing a signed message.
+4. Recreate the message structure and hash it with keccak256.
+5. Extract Ethereum address from Ethereum signature and the hash from previous step.
+6. Compare Ethereum address received as an input to the address extracted from the step before.
+
+The hardest part for us is getting the hash of our message. Once we have that, we can use a built-in function `verify_eth_signature_uint256` that combines steps 5 and 6 and will do all the heavy lifting, dealing with complicated math. 
+So we will have to write a function that constructs an eip712 structure and returns its hash.
+
 ## Recreating and hashing the message
 ### The basic idea
-Since the ownership of the Ethereum account is confirmed by signing the message for which the private key is needed, we also need to confirm that the user owns the StarkNet account of which's address he is using. That's why we're deliberately not passing `starknet_address` as an input variable, instead, we call `get_caller_address()`, which we'll use as the address we need. Connection will be created only if the address of an account's executing the tx is the one signed.
+Since the ownership of the Ethereum account is confirmed by signing the message for which the private key is needed, we also need to confirm that the user owns the StarkNet account that is supposed to be connected. That's why we're deliberately not passing `starknet_address` as an input variable, instead, we call `get_caller_address()`, which we'll use as the address we need. The connection will be created only if the address of the account executing the tx is the one signed.
 ### Constants
 Instead of calculating the structure hash every time, we can precalculate it and store it as a constant to save us some computationally expensive operations. Additionally, Ethereum uses a pre-chosen prefix, which is explained in the [documentation](https://eips.ethereum.org/EIPS/eip-712)
 
@@ -171,11 +142,11 @@ func set_domain_separator{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, rang
  ```
 An account deploying mapping contract should perform set_domain_separator within the same transaction as deployment, using multicall.
 ### Recreating the message hash
-Since our example is pretty easy, our structure contains only one field (myStarkNetAddress), recreating the hashable string is pretty easy; we just need to concatenate the structure hash with our value.
+Since our example is pretty easy, our structure contains only one field (starknetAddress), recreating the hashable string is pretty easy; we just need to concatenate the structure hash with our value.
 
 
  ```cairo
- func get_hash{range_check_ptr,  keccak_ptr: felt*, bitwise_ptr : BitwiseBuiltin*}(starknet_address: felt,
+ func get_eip712_hash{range_check_ptr,  keccak_ptr: felt*, bitwise_ptr : BitwiseBuiltin*}(starknet_address: felt,
  domain_hash : Uint256) -> (hashed_msg : Uint256)
 {
     let (starknet_address_h, starknet_address_l) = split_felt(starknet_address);
@@ -211,7 +182,7 @@ We're again operating on 128 bit values, so we need to shift everything to fit o
     let (w3, overflow) = add_prefix(data_hash.low, prefix);
 ```
 
-We can't use the same high-level keccak implementation as before (`keccak_uint256s_bigend`), since it assumes that our input in bytes is a multiple of 32, which it is not. Because of the 2 overflow bytes, our input is 66 bytes long, and thus `keccak_uint256s_bigend` will assume that we're also counting all the leading zeros of the last value, making our input 96 bytes long, which would result in incorrect hashes. The solution is to use the low-end keccak function - `keccak_bigend`, which unfortunately takes the input in the little-endian format, forcing us to change our variables to it. Note that the `bigend` in the name of the function refers to the output format, not the input format.
+We can't use the same high-level keccak implementation as before (`keccak_uint256s_bigend`), since it assumes that our input in bytes is a multiple of 32, which it is not. Because of the 2 overflow bytes, our input is 66 bytes long, and thus `keccak_uint256s_bigend` will assume that we're also counting all the leading zeros of the last value, making our input 96 bytes long, which would result in incorrect hashes. The solution is to use the low-level keccak function - `keccak_bigend`, which unfortunately takes the input in the little-endian format, forcing us to change our variables to it. Note that the `bigend` in the name of the function refers to the output format, not the input format.
 
 ```cairo
 // Splits 128bit big endian int to 2 64bit small endian ints
@@ -247,9 +218,9 @@ func populate_array_little_end{range_check_ptr, bitwise_ptr : BitwiseBuiltin*}(w
     return ();
 }
 ```
-Now we can finish our `get_hash` function.
+Now we can finish our `get_eip712_hash` function.
 ```cario
-func get_hash{range_check_ptr,  keccak_ptr: felt*, bitwise_ptr : BitwiseBuiltin*}(starknet_address: felt, domain_hash : Uint256) -> (
+func get_eip712_hash{range_check_ptr,  keccak_ptr: felt*, bitwise_ptr : BitwiseBuiltin*}(starknet_address: felt, domain_hash : Uint256) -> (
         hashed_msg : Uint256){
 
     let (starknet_address_h, starknet_address_l) = split_felt(starknet_address);
@@ -276,7 +247,7 @@ func get_hash{range_check_ptr,  keccak_ptr: felt*, bitwise_ptr : BitwiseBuiltin*
     return (hashed_msg = res);  
 }
 ```
-All that's left to do is call `verify_eth_signature_uint256` in our `assert_valid_eth_signature` function.
+After getting the message hash from the `get_eip712_hash` function and splitting our signature into v, r, and s parts, all that's left to do is call `verify_eth_signature_uint256`.
 ```cairo
 func assert_valid_eth_signature{
         syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr,
@@ -296,7 +267,7 @@ func assert_valid_eth_signature{
     let (local keccak_ptr_start) = alloc();
     let keccak_ptr = keccak_ptr_start;
 
-    let (hash_uint) = get_hash{keccak_ptr=keccak_ptr}(starknet_address, domain_hash);
+    let (hash_uint) = get_eip712_hash{keccak_ptr=keccak_ptr}(starknet_address, domain_hash);
    
     verify_eth_signature_uint256{keccak_ptr=keccak_ptr}(hash_uint, r, s, v, eth_address);
 
@@ -306,8 +277,23 @@ func assert_valid_eth_signature{
 }
 ```
 It's **VERY** important that we call `finalize_keccak` because of the internal batching done inside it. Failing to call it will make the keccak function unsound - the prover will be able to choose any value as the keccak's result.
+
 ## Finalizing
-If everything matches, no assertion fails and `save_connected_addresses` function will be called, which will bind our two addresses together. <br/>
+If everything matches, no assertion fails and `save_connected_addresses` function will be called, which will bind our two addresses together.
+```cairo
+@external
+func add_connection{
+    syscall_ptr : felt*,
+    pedersen_ptr : HashBuiltin*,
+    range_check_ptr,
+    bitwise_ptr : BitwiseBuiltin*
+}(eth_address : felt, starknet_address : felt, domain_hash: Uint256, signature_len: felt, signature: felt*){
+    assert_valid_eth_signature(eth_address, starknet_address, domain_hash, signature_len, signature);
+    save_connected_addresses(eth_address, starknet_address);
+    return ();
+}
+```
+The last thing to do is actually create a connection between `eth_address` and `starknet_address`. As this is an example, we'll be using a basic map between a pair of addresses and a boolean value (`read` function of a storage variable in cairo will return 0 if a key doesn't exist). In our, simple, case `save_connected_addresses` just calls an internal `write` function of the storage variable.<br/>
 
 ```cairo
 %lang starknet
@@ -322,7 +308,7 @@ func storage(eth_address : felt, starknet_address : felt) -> (exists: felt){
 ```
 Bear in mind that we won't be able to list all the Starknet addresses connected to the Ethereum address or vice versa. All we can do is check whether some two addresses are connected or not. If you want some more advanced functions, you'd need to change how the addresses are bound - for example, instead of <br/>`func storage(eth_address : felt, starknet_address : felt) -> (exists: felt)`
 as a storage variable, you could use <br/>
-`func storage(eth_address : felt, starknet_address_index : felt) -> (starknet_address: felt)` which, instead of mapping a pair of `eth_address` and `starknet_address` to a 1, signifying the existence of the connection, maps the pair of `eth_address` and index to the `starknet_address` allowing you to iterate through them:
+`func storage(eth_address : felt, starknet_address_index : felt) -> (starknet_address: felt)` which, instead of mapping a pair of `eth_address` and `starknet_address` to a 1, marking the existence of the connection, maps the pair of `eth_address` and index to the `starknet_address` allowing you to iterate through them:
 ```
 storage(0x1, 0) = 0x321312
 storage(0x1, 1) = 0x721397

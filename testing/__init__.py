@@ -17,20 +17,20 @@ VERYFYING_CONTRACT = '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'
 
 # Message structure
 class Payload(EIP712Struct):
-  myStarkNetAddress = Uint(256)
+  starknetAddress = Uint(256)
 
 class Eip712_hashing_test:
     def __init__(self):
         self.pkey = keys.PrivateKey(hex_to_bytes(PRIVATE_KEY))
         self.eth_address = self.pkey.public_key.to_checksum_address()
-        self.domain = make_domain(name='TestContract',
+        self.domain = make_domain(name='Confirm the ownership of this StarkNet address',
                         version='1',
                         verifyingContract=VERYFYING_CONTRACT)
 
     def get_signature(self, starknet_address):
         # Filling the message structure
         msg = Payload()
-        msg['myStarkNetAddress'] = starknet_address
+        msg['starknetAddress'] = starknet_address
 
         # Converting it to signable bytes
         signable_bytes = msg.signable_bytes(self.domain)

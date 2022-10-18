@@ -13,8 +13,8 @@ const DIVISOR = 2**64;
 const PREFIX = 0x1901;
 
 // A Hash of a structure that we're signing (Payload) which is shown in ../struct.json file 
-const TYPE_HASH_HIGH = 0xed316f23563caa993043a41222b71801;
-const TYPE_HASH_LOW = 0xf39d338d03bb3716a63570c1320a8101;
+const TYPE_HASH_HIGH = 0x065712a4b704d4db141ac23cc21f8064;
+const TYPE_HASH_LOW = 0x1aa16b709432aa6609751730017007d8;
 
 // Splits 128bit big endian int to 2 64bit small endian ints
 func split_to_64bit_small_endian_words{range_check_ptr, bitwise_ptr : BitwiseBuiltin*}(value: felt) -> (high: felt, low: felt){
@@ -62,7 +62,7 @@ func add_prefix{range_check_ptr, bitwise_ptr : BitwiseBuiltin*}(value : felt, pr
     return (result, overflow);
 }
 
-func get_hash{range_check_ptr,  keccak_ptr: felt*, bitwise_ptr : BitwiseBuiltin*}(starknet_address: felt, domain_hash : Uint256) -> (
+func get_eip712_hash{range_check_ptr,  keccak_ptr: felt*, bitwise_ptr : BitwiseBuiltin*}(starknet_address: felt, domain_hash : Uint256) -> (
         hashed_msg : Uint256){
 
     let (starknet_address_h, starknet_address_l) = split_felt(starknet_address);

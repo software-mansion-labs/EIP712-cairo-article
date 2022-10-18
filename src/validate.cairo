@@ -12,7 +12,7 @@ from starkware.cairo.common.cairo_secp.bigint import (
     uint256_to_bigint,
 )
 from starkware.cairo.common.serialize import serialize_word
-from src.eip712 import get_hash
+from src.eip712 import get_eip712_hash
 from src.map import save_connected_addresses, are_addresses_connected
 
 // Will be used once contract is deployed and it's address is set, for test purposes domain separator is passed as an argument.
@@ -50,7 +50,7 @@ func assert_valid_eth_signature{
     let (local keccak_ptr_start) = alloc();
     let keccak_ptr = keccak_ptr_start;
 
-    let (hash_uint) = get_hash{keccak_ptr=keccak_ptr}(starknet_address, domain_hash);
+    let (hash_uint) = get_eip712_hash{keccak_ptr=keccak_ptr}(starknet_address, domain_hash);
    
     verify_eth_signature_uint256{keccak_ptr=keccak_ptr}(hash_uint, r, s, v, eth_address);
 
