@@ -41,7 +41,7 @@ Elements of the domain are as follows:
 
 
 ## Signing with an Ethereum wallet
-Let's use Metamask as an example. You just need to call the `signTypedData_v4` ffunction with proper parameters and it will return the signature that we need.<br/>
+Let's use Metamask as an example. You just need to call the `signTypedData_v4` function with proper parameters and it will return the signature that we need.<br/>
 ```js
 const msg = {
   domain: {
@@ -71,7 +71,7 @@ await window.ethereum.request({
     params: [accounts[0], JSON.stringify(msg)]
 })
 ```
-After you run this this JS code in the browser's console on the MetaMask website it will trigger a signing request. An application would use a similar code to get user's accounts and signature. <br/><br/>
+After you run this this JS code in the browser's console with MetaMask enabled it will trigger a signing request. An application would use a similar code to get user's accounts and signature. <br/><br/>
 <img alt="Screenshot 2022-10-12 at 10 41 54" src="./graphics/metamask.png"><br/><br/>
 As you can see everything is transparent so you don't have to sign something blindly - that's one of the pros of using EIP-712 standard.<br/><br/>
 <img alt="Screenshot 2022-10-12 at 10 41 54" src="./graphics/signature.png"><br/>
@@ -90,7 +90,7 @@ So we will have to write a function that constructs an eip712 structure and retu
 
 ## Recreating and hashing the message
 ### The basic idea
-Since the ownership of the Ethereum account is confirmed by signing the message for which the private key is needed, we also need to confirm that the user owns the StarkNet account that is supposed to be connected. That's why we can't accept StarkNet address as a parameter and have to use syscall `get_caller_address` to get it and why it's essential that we use our StarkNet account for calling the contract. The connection will be created only if the address of the account executing the tx is the one signed.
+Since the ownership of the Ethereum account is confirmed by signing the message for which the private key is needed, we also need to confirm that the user owns the StarkNet account that is supposed to be connected. That's why we can't accept StarkNet address as a parameter and have to use syscall `get_caller_address` to get it. This is why it's essential that we use our StarkNet account for calling the contract. The connection will be created only if the address of the account executing the tx is the one signed.
 ### Constants
 Instead of calculating the structure hash every time, we can precalculate it and store it as a constant to save us some computationally expensive operations. Additionally, Ethereum uses a pre-chosen prefix, which is explained in the [documentation](https://eips.ethereum.org/EIPS/eip-712)
 
@@ -133,7 +133,7 @@ func set_domain_separator{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, rang
     alloc_locals;
     let (domain_separator_check) = domain_sep.read();
     let (check) = uint256_eq(domain_separator_check, Uint256(0,0));
-    // It domain separator is anything but 0 then it has already been set and it should remain unchangable
+    // If domain separator is anything but 0 then it has already been set and it should remain unchangable
     with_attr error_message(
         "Domain separator hash can only be set once."
     ){
@@ -143,7 +143,7 @@ func set_domain_separator{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, rang
     return();
 }
  ```
-An account deploying mapping contract should execute `set_domain_separator` within the same transaction as deployment, using multicall.
+An account deploying mapping contract must execute `set_domain_separator` within the same transaction as deployment, using multicall.
 ### Recreating the message hash
 Since our example is very simple, our structure contains only one field (starknetAddress). Recreating the hashable string is pretty easy - we just need to concatenate the structure hash with our value.
 
@@ -317,6 +317,6 @@ storage(0x1, 0) = 0x321312
 storage(0x1, 1) = 0x721397
 storage(0x1, 2) = 0 (not set, there are 2 bindings for address 0x1)
 ````
-Every bit of code that I've put in here is in [this repository](https://github.com/software-mansion-labs/EIP712-cairo-article) alongside some additional functions and a python script that serves as an Ethereum signing service. Mind that the code has not been audited and should not be used on production without a proper audit. It is only meant to be a demonstration of the concept.
+Every bit of code that I've put in here is in [this repository](https://github.com/software-mansion-labs/EIP712-cairo-article) alongside some additional functions and a python script that serves as an Ethereum signing service. Mind that the code has not been audited and **should not be used on production** without a proper audit. It is only meant to be a demonstration of the concept.
 
 
