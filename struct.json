@@ -1,19 +1,19 @@
 {
-    "domain": {
-      "name": "TestContract",
-      "contractAddress": "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
-      "version": "1"
-    },
-  
-    "primaryType": "Payload",
-    "types": {
-      "domain": [
-        { "name": "name", "type": "string" },
-        { "name": "contractAddress", "type": "address"},
-        { "name": "version", "type": "string" }
-      ],
-      "Payload": [
-        { "name": "StarknetAddress", "type": "uint256" }
-      ]
-    }
+  "domain": {
+    "name": "Confirm the ownership of this StarkNet address",
+    "contractAddress": "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+    "version": "1"
+  },
+
+  "primaryType": "Payload",
+  "types": {
+    "domain": [
+      { "name": "name", "type": "string" },
+      { "name": "verifyingContract", "type": "address"},
+      { "name": "version", "type": "string" }
+    ],
+    "Payload": [
+      { "name": "starknetAddress", "type": "uint256" }
+    ]
   }
+}

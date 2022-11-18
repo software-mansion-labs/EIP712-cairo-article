@@ -2,6 +2,7 @@
 from starkware.cairo.common.cairo_builtins import HashBuiltin, BitwiseBuiltin
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.uint256 import Uint256
+from starkware.starknet.common.syscalls import get_caller_address
 
 from src.validate import add_connection
  
@@ -21,6 +22,7 @@ func test_validate_add{
     local r_high;
     local s_low;
     local s_high;
+    let (local starknet_address) = get_caller_address();
     %{
         import sys
         sys.path.append("/usr/local/lib/python3.9/site-packages")
@@ -28,7 +30,7 @@ func test_validate_add{
         import testing
         test1 = testing.Eip712_hashing_test()
         
-        sig = test1.get_signature(314141244)
+        sig = test1.get_signature(ids.starknet_address)
         
         ids.eth_address = test1.get_eth_address()
 
@@ -49,6 +51,6 @@ func test_validate_add{
     assert array[2] = r_low;
     assert array[3] = s_high;
     assert array[4] = s_low;
-    add_connection(eth_address, 314141244, domain_hash, 5, array);
+    add_connection(eth_address, domain_hash, 5, array);
     return();
 }
