@@ -1,8 +1,9 @@
-## `map.cairo`
-Stores pairs of the form `(eth_address: felt, starknet_address)`
+# Simple example of EIP712 authentication in Cairo
 
-## `eip712.cairo`
-Function `get_eip712_hash()` calculates hash of a given structure in EIP-712 standard.
+## Testing
 
-## `validate.cairo`
-Function `add_connection()` binds ETH adsress to Starknet address if the ETH address matches the message signature which is checked in `is_valid_signature()` function.
+`testing` folder contains a python script that serves as an Ethereum signing service with a fixed private key that can be changed to any valid Ethereum private key.
+
+## Protostar
+
+For testing Cairo scripts you can use protostar which makes it much easier than doing it manually. For a protostar tutorial, I would recommend [this article](https://blog.swmansion.com/testing-starknet-contracts-made-easy-with-protostar-2ecdad3c9133).
